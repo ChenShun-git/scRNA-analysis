@@ -28,7 +28,7 @@ names(dir)=c("sample2","sample21")
 scRNA.list <- list()
 for(i in 1:length(dir)){
   counts=Read10X(data.dir = dir[i])
-  scRNA.list[[i]]<- CreateSeuratObject(counts,min.cells = 3,min.features = 2000)
+  scRNA.list[[i]]<- CreateSeuratObject(counts,min.cells = 3,min.features = 300)
 
 }
 #此处省略过滤线粒体与红细胞的质控过程
@@ -37,26 +37,38 @@ for(i in 1:length(dir)){
 ```
 for(i in 1:length(dir)){
   scRNA.list[[i]]<- NormalizeData(scRNA.list[[i]])
-  scRNA.list[[i]]<- FindVAriableFeatures(scRNA.list[[i]],selection.method='vst')
+  scRNA.list[[i]]<- FindVAriableFeatures(scRNA.list[[i]],selection.method='vst'，nfeatures=3000)
 
 }
 #找到不同细胞共有的高变基因
-features <- SelectIntegrationFeatures(object.list=ifnb.list)
+features <- SelectIntegrationFeatures(object.list=scRNA.list)
 #找到锚定点
 scRNA.anchors <- FindIntegrationAnchors(object.list=scRNA.list,anchor.features=features)
 #进行数据整合
 scRNA1 <- IntegrateData(anchorset = scRNA.anchors)
-#接下来进行ScaleData、PCA、TSNE、UMAP等处理（略）
-```
+#接下来进行ScaleData、PCA、TSNE、UMAP等处理
+scRNA1=ScaleData(scRNA1)
+scRNA1 <- RunPCA(scRNA1, npcs = 30, verbose = T)
+# t-SNE and Clustering
+scRNA1 <- FindNeighbors(scRNA1, reduction = "pca", dims = 1:20)
+scRNA1 <- FindClusters(scRNA1, resolution = 0.8)
+scRNA1 <- RunUMAP(scRNA1, reduction = "pca", dims = 1:20)
+scRNA1 <- RunTSNE(scRNA1, dims = 1:20)
+p=DimPlot(scRNA1, reduction = "umap", group.by = "orig.ident")+DimPlot(scRNA1, reduction = "umap", label = F)
+p
 
+```
+![p](https://user-images.githubusercontent.com/112565216/188122634-94a4e63d-995d-4b34-854a-b624c03fa27d.png)
+
+由图可看出，经过整合后sample2与sample21的细胞较为均匀地分布在各个cluster中
 # harmony法
 与锚点整合法不同，锚点整合法在对数据进行归一化处理时，需要将不同样本的数据分开处理，但harmony法不需要拆分样本（harmony算法不建议与SCTransform一起使用）
 ## 第一步 读取数据并创建Seurat对象
 ```
 scRNA2 <- Read10X("BC2/")
 scRNA21 <- Read10X("BC21")
-scRNA2 <- CreateSeuratObject(scRNA2,project = "sample2", min.cells=3,min.features=2000)
-scRNA21 <- CreateSeuratObject(scRNA21,project = "sample21",min.cells = 3,min.features = 2000)
+scRNA2 <- CreateSeuratObject(scRNA2,project = "sample2", min.cells=3,min.features=200)
+scRNA21 <- CreateSeuratObject(scRNA21,project = "sample21",min.cells = 3,min.features = 200)
 
 scRNA_harmony <- merge(scRNA2,y=c(scRNA21))
 ```
@@ -73,9 +85,14 @@ scRNA_harmony <- RunHarmony(scRNA_harmony,group.by.vars = "orig.ident")
 ##第四步 按照正常流程进行umap降维、tsne降维与可视化与后续步骤
 ```
 #需指定reduction参数为harmony
-scRNA_harmony <- RunUMAP(scRNA_harmony,reduction = "harmony",dims=1:15)
 scRNA_harmony <- FindNeighbors(scRNA_harmony,reduction = "harmony",dims=1:15) %>% FindClusters(resolution = 0.5)
+scRNA_harmony <- RunUMAP(scRNA_harmony,reduction = "harmony",dims=1:15)
 
-plot1=DimPlot(scRNA_harmony,reduction = "umap",label=T)
+plot1=DimPlot(scRNA_harmony,reduction = "umap",label=T)+DimPlot(scRNA_harmony, reduction = "umap", group.by='orig.ident') 
 plot1
+```
+![plot1](https://user-images.githubusercontent.com/112565216/188154908-0b39151e-d23d-4f54-ad23-474fdb34b836.png)
+
+从图中可看出不同样品的细胞均匀分布在各个cluster中，说明整合效果较好
+
 
