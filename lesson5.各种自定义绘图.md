@@ -363,4 +363,5 @@ addgrids3d(pca.data[,c("PC1","PC2","PC3")], grid = c("xy", "xz", "yz"))
 ```
 ![3D PCA
 plot](https://upload-images.jianshu.io/upload_images/28382212-2ea8248bce0d8c91.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 从图中可看出不同分组里哪些细胞类型差异较大，分散越明显差异越大
