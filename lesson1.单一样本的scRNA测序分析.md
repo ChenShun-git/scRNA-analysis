@@ -95,6 +95,8 @@ scRNAa <- RunPCA(scRNA1,features=c(s_genes,g2m_genes))
 p <- DimPlot(scRNAa,reduction = "pca",group.by="Phase")
 p
 ```
+![细胞周期](https://upload-images.jianshu.io/upload_images/28382212-4cf671192fe5a8c1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+由图可知细胞周期没有对细胞聚类产生明显影响
 ```
 #如果细胞周期有影响则消除细胞周期的影响
 #scRNAb <- ScaleData(scRNA1,vars.to.regress="S.Score","G2M.Score")
