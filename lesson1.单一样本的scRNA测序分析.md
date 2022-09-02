@@ -67,6 +67,20 @@ scale_gene <- VariableFeatures(scRNA1)
 scRNA1 <- ScaleData(scRNA1,features=scale_gene)
 #将高变基因通过PCA降维,RunPCA默认选取50个PC
 scRNA1 <- RunPCA(scRNA1,features=VariableFeatures(scRNA1))
+```
+通过elbow plot和jackstraw plot选择合适的pc数进行进一步降维聚类
+```
+ElbowPlot(scRNA1,ndims = 50)
+scRNA1 <- JackStraw(scRNA1,dims = 50)
+scRNA1 <- ScoreJackStraw(scRNA1,dims=1:50)
+JackStrawPlot(scRNA1,dims =1:50)
+```
+![elbowplot](https://user-images.githubusercontent.com/112565216/188100042-95e3a917-1cc3-4ae4-8fa3-22a389f30f0e.png)
+![jackstawplot](https://user-images.githubusercontent.com/112565216/188100280-81362f92-df69-45b8-938c-18cab5d219e1.jpg)
+
+通过上图可知，大于20的pc数重要性急剧降低，因此选择20个pc数较合适
+
+```
 ##聚类处理
 pc.num=1:20
 scRNA1 <- FindNeighbors(scRNA1,dims=pc.num)
@@ -75,10 +89,15 @@ scRNA1 <- FindClusters(scRNA1,resolution=1.0)
 scRNA1 <- RunTSNE(scRNA1,dims=pc.num)
 embed_tsne <- Embeddings(scRNA1,"tsne")
 #tsne法
-DimPlot(scRNA1,reduction="tsne",label=TRUE)
+DimPlot(scRNA1,reduction="tsne")
 #umap法
-DimPlot(scRNA1,reduction="umap",label=TRUE)
+DimPlot(scRNA1,reduction="umap")
 ```
+![tsne降维](https://user-images.githubusercontent.com/112565216/188101164-08d6c87d-8914-41a3-a764-5e6cea4f75ab.png)
+
+![umap降维](https://user-images.githubusercontent.com/112565216/188101018-d4e224db-c671-43e6-a0bc-6e40e762d17d.png)
+
+
 # 第四步 细胞周期评分
 scRNA测序中，单个样品里有许多细胞，每个细胞的表达的基因种类与表达量都不相同，根据基因表达的不同将细胞进行分类，但细胞基因表达的差距除了是因为细胞种类的差别，也有可能是因为细胞所处周期的差别，细胞聚类可能会被细胞周期影响，所以需要检查细胞周期的影响，如果细胞周期影响较大则需要排除细胞周期因素
 ```
