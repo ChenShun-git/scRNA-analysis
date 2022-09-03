@@ -298,7 +298,7 @@ for (cluster in seq(1,ncol(seu.obj.mat))) {
   gene_fc <- seu.obj.gene/apply(seu.obj.mat[,-cluster],1,max)
   gene_list2 <- names(sort(gene_fc,decreasing=TRUE)[1:200])
 
-  gene_list <- unique(c(gene_list,gene_list2))   
+  gene_list <- unique(c(gene_list1,gene_list2))   
 
   Ta <- seu.obj.mat[gene_list,cluster]
   Mb <- seu.obj.mat2[gene_list,]
@@ -317,7 +317,7 @@ for (cluster in seq(1,ncol(seu.obj.mat2))) {
   gene_fc <- seu.obj.gene/apply(seu.obj.mat2[,-cluster],1,max)
   gene_list2 <- names(sort(gene_fc,decreasing=TRUE)[1:200])
 
-  gene_list <- unique(c(gene_list,gene_list2))   
+  gene_list <- unique(c(gene_list1,gene_list2))   
   Ta <- seu.obj.mat2[gene_list,cluster]
   Mb <- seu.obj.mat[gene_list,]
   solv <- nnls(Mb,Ta)
