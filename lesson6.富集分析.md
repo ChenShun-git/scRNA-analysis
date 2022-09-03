@@ -599,10 +599,7 @@ BoxPlot.metabolism(obj = countexp.Seurat, pathway = input.pathway, phenotype = "
 metabolism.matrix<-sc.metabolism(countexp = countexp, method = "VISION", imputation = F, ncores = 2, metabolism.type = "KEGG")
 
 ```
-![dimplot](https://upload-images.jianshu.io/upload_images/28382212-e72db6c8177d5af4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-![dotplot](https://upload-images.jianshu.io/upload_images/28382212-39b14305f8c6f2bd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-![boxplot](https://upload-images.jianshu.io/upload_images/28382212-d20ab40354613784.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 # 6.GSEA富集分析
 
 传统的KEGG或GO富集分析的缺点是规定阈值进行筛选，但一条通路上不同的基因表达量可能会有很大差异，上游基因的微小变化可能造成下游基因明显变化，因此规定阈值进行筛选会损失很多基因信息。而GSEA方法不需要规定阈值进行筛选，规避了传统富集方法的缺点。
