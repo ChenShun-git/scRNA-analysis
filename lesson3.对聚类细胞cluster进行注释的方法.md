@@ -255,6 +255,9 @@ solv <- nnls(Mb,Ta)
 corr <- solv$x
 corr
 ```
+
+![corr](https://user-images.githubusercontent.com/112565216/188264024-ead61a7e-12e9-452e-bf13-5ac43c683b3c.png)
+
 运行结果中B数据集里与cluster2相关性最强的cluster（根据运行结果可知是cluster6）可以视作与cluster同一种类的细胞
 
 ### 进行验证
