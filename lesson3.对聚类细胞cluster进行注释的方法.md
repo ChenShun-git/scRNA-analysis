@@ -335,17 +335,9 @@ row.names(beta) <- paste0("C",1:nrow(beta)-1)
 colnames(beta)<- paste0("C",1:ncol(beta)-1)
 ```
 ### 进行可视化
-```
-#可视化
-pheatmap::pheatmap(beta,cluster_rows = FALSE,cluster_cols = FALSE)
-```
-热图色块颜色越深对应的两个cluster的相关性越高
-
-
 ### 根据热图来优化聚类结果
 ```
 library(psych)
-colnames(seu.obj@meta.data)
 Idents(seu.obj)="seurat_clusters"
 #计算表达矩阵每个cluster的平均值
 exp = AverageExpression(seu.obj)
@@ -357,6 +349,7 @@ DimPlot(seu.obj,label=T)
 ```
 根据相关性热图可以判断聚类图上距离较近的cluster是否可以归于同一个cluster
 示例：
-![聚类图.png](https://upload-images.jianshu.io/upload_images/28382212-c95dbb68f78f1f43.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-![相关性热图.png](https://upload-images.jianshu.io/upload_images/28382212-6a8930f2904c2ba5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![聚类图](https://user-images.githubusercontent.com/112565216/188270368-102663ce-3551-4b49-afc7-2e7391177683.png)
+![热图](https://user-images.githubusercontent.com/112565216/188270322-5313ffd3-6766-488d-b52b-c78572a9774e.png)
+
 根据热图聚类情况可知，cluster0,6,9的相关性很强，在聚类图中距离也很相近，可以被归为一个cluster
