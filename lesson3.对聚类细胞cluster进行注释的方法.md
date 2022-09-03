@@ -204,7 +204,7 @@ names(dir)=c("sample2","sample21")
 scRNA.list <- list()
 for(i in 1:length(dir)){
   counts=Read10X(data.dir = dir[i])
-  scRNA.list[[i]]<- CreateSeuratObject(counts,min.cells = 3,min.features = 2000)
+  scRNA.list[[i]]<- CreateSeuratObject(counts,min.cells = 3,min.features = 300)
   
 }
 
@@ -220,20 +220,20 @@ seu.obj2 <- seu.obj2 %>% NormalizeData(verbose=FALSE) %>% FindVariableFeatures(s
 shared_gene <- intersect(rownames(seu.obj),row.names(seu.obj2))
 
 #计算所有基因在每个cluster中的表达量之和
-seu.obj.mat <- AggregateExpression(seu.obj,assays="RNA",features=shared_gene)$RNA
+seu.obj.mat <- AggregateExpression(seu.obj,assays="RNA",features=shared_gene,slot="count")$RNA
 #除以测序深度进行normalization
 seu.obj.mat <- seu.obj.mat / rep(colSums(seu.obj.mat),each=nrow(seu.obj.mat))
 seu.obj.mat <- log10(seu.obj.mat * 100000+1)
 
-seu.obj.mat2 <- AggregateExpression(seu.obj2,assays="RNA",features=shared_gene)$RNA
+seu.obj.mat2 <- AggregateExpression(seu.obj2,assays="RNA",features=shared_gene,slot="count")$RNA
 seu.obj.mat2 <- seu.obj.mat2 / rep(colSums(seu.obj.mat2),each=nrow(seu.obj.mat2))
 seu.obj.mat2 <- log10(seu.obj.mat2 * 100000+1)
 ```
 ### 筛选基因
 根据目标数据集（A数据集中选定的cluster）中给定的细胞类型与整体细胞类型（数据集A）中位数的倍数变化，选择前200个，得到list1；然后根据目标数据集中给定的细胞类型与其他细胞类型（去除选定的cluster的数据集A）最大值的倍数变化，选择前200个，得到list2，然后将两个list进行合并
 ```
-#以cluster2为为例
-cluster <- 2
+#以cluster3为为例
+cluster <- 3
 seu.obj.gene <- seu.obj.mat[,cluster+1]
 #得出list1
 gene_fc <- seu.obj.gene / apply(seu.obj.mat,1,median)
@@ -256,9 +256,9 @@ corr <- solv$x
 corr
 ```
 
-![corr](https://user-images.githubusercontent.com/112565216/188264024-ead61a7e-12e9-452e-bf13-5ac43c683b3c.png)
+![corr](https://user-images.githubusercontent.com/112565216/188267215-b2f47fe1-7eb4-4a3f-9bed-2c4299b668c8.png)
 
-运行结果中B数据集里与cluster2相关性最强的cluster（根据运行结果可知是cluster6）可以视作与cluster同一种类的细胞
+运行结果中B数据集里与cluster3相关性最强的cluster（根据运行结果可知是cluster6）可以视作与cluster同一种类的细胞
 
 ### 进行验证
 由结果可知，A数据集中的cluster2与B数据集中的cluster6相关性最高，接下来尝试找出B数据集中的cluster6与A数据集中的哪个cluster相关性最高（即将上述过程反向操作）
@@ -269,17 +269,20 @@ seu.obj.gene <- seu.obj.mat2[,cluster+1]
 gene_fc <- seu.obj.gene / apply(seu.obj.mat2,1,median)
 gene_list1 <- names(sort(gene_fc,decreasing=TRUE)[1:200])
 
-gene_fc <- seu.obj.gene/apply(seu.obj.mat[,-(cluster+1)],1,max)
+gene_fc <- seu.obj.gene/apply(seu.obj.mat2[,-(cluster+1)],1,max)
 gene_list2 <- names(sort(gene_fc,decreasing=TRUE)[1:200])
 
-gene_list <- unique(c(gene_list,gene_list2))   
+gene_list <- unique(c(gene_list1,gene_list2))   
 
 Ta <- seu.obj.mat2[gene_list,cluster+1]
 Mb <- seu.obj.mat[gene_list,]
 solv <- nnls(Mb,Ta)
-corr <- solv$x
-corr
+corr2 <- solv$x
+corr2
 ```
+![image](https://user-images.githubusercontent.com/112565216/188269455-7ffc8b57-1a54-475e-9d44-562fce6fd8c7.png)
+
+根据结果可知cluster3 与cluster 6相关性最大
 ### 批量计算相关系数
 上述是计算单个cluster相关系数的pipeline
 接下来对数据集中多个cluster进行批量计算
