@@ -29,7 +29,9 @@ marker2 <- FindConservedMarkers(scRNA_harmony,ident.1 = 1,grouping.var = "orig.i
 #例如T细胞的marker基因IL7R，CD3D，NKG7
 DotPlot(scRNA_harmony,features=c("IL7R","CD3D","NKG7"))
 ```
-![Snipaste_2022-08-11_12-07-01.png](https://upload-images.jianshu.io/upload_images/28382212-3d8738d617ec227d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Dotplot](https://user-images.githubusercontent.com/112565216/188261795-a916c861-999b-4347-97ff-10e503140f74.png)
+
+
 可以根据气泡图看出，cluster2的T细胞marker基因表达量较高，所以可以被归类为T细胞
 
 ## 4.重命名
