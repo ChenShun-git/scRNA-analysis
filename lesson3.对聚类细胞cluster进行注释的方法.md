@@ -242,7 +242,7 @@ gene_list1 <- names(sort(gene_fc,decreasing=TRUE)[1:200])
 gene_fc <- seu.obj.gene/apply(seu.obj.mat[,-(cluster+1)],1,max)
 gene_list2 <- names(sort(gene_fc,decreasing=TRUE)[1:200])
 #合并两个list
-gene_list <- unique(c(gene_list,gene_list2))
+gene_list <- unique(c(gene_list1,gene_list2))
 ```
 ### 进行相关性计算
 ```
