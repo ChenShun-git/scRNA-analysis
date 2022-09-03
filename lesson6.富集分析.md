@@ -599,6 +599,9 @@ BoxPlot.metabolism(obj = countexp.Seurat, pathway = input.pathway, phenotype = "
 metabolism.matrix<-sc.metabolism(countexp = countexp, method = "VISION", imputation = F, ncores = 2, metabolism.type = "KEGG")
 
 ```
+![dimplot](https://user-images.githubusercontent.com/112565216/188271408-b9fc4abe-5da6-424f-9d01-08efc3155a77.png)
+![dotplot](https://user-images.githubusercontent.com/112565216/188271428-116ee4ba-2f64-4427-98ca-5c875630f29d.png)
+![boxplot](https://user-images.githubusercontent.com/112565216/188271489-5752f98d-bcaa-4f67-b9e7-2d0fc2a1b7a3.png)
 
 # 6.GSEA富集分析
 
