@@ -108,8 +108,8 @@ sc.pl.umap(adata, color='leiden')
 
 ### 5.标记cluster
 确定marker基因（※）
-根据marker基因确定cluster的细胞种类后对细胞
-标记
+
+根据marker基因确定cluster的细胞种类后对细胞进行标记
 ```
 new_cluster_names = [
     'CD4 T', 'CD14 Monocytes',
