@@ -72,3 +72,52 @@ sc.pl.highly_variable_genes(adata)
 ```
 
 ![image](https://user-images.githubusercontent.com/112565216/188348202-4d2f272c-8af0-466e-8ac9-45db057e3340.png)
+
+```
+#将归一化后的数据进行保存
+adata.raw = adata
+#提取高变基因
+adata = adata[:, adata.var.highly_variable]
+#将测序深度和线粒体基因比例进行归一化处理
+sc.pp.regress_out(adata, ['total_counts', 'pct_counts_mt'])
+#对数据放缩变换，使数据方差为1，平均值为0
+sc.pp.scale(adata, max_value=10)
+#PCA降维
+sc.tl.pca(adata, svd_solver='arpack')
+#将某个基因的PCA降维结果可视化
+sc.pl.pca(adata, color='CST3')
+```
+![image](https://user-images.githubusercontent.com/112565216/188348766-ae14985b-80ff-4107-ae66-8a90c07eb87e.png)
+
+```
+#将每个PC的贡献度可视化
+sc.pl.pca_variance_ratio(adata, log=True)
+
+```
+![image](https://user-images.githubusercontent.com/112565216/188348839-735cf99b-da41-4f53-b616-0d8623f14038.png)
+
+```
+#进行UMAP降维
+sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
+sc.tl.umap(adata)
+#进行聚类分簇
+sc.tl.leiden(adata)
+sc.pl.umap(adata, color='leiden')
+```
+![image](https://user-images.githubusercontent.com/112565216/188350479-22b237cf-f7c8-4eb6-ba80-e6e5fb8746ee.png)
+
+### 5.标记cluster
+确定marker基因（※）
+根据marker基因确定cluster的细胞种类后对细胞
+标记
+```
+new_cluster_names = [
+    'CD4 T', 'CD14 Monocytes',
+    'B', 'CD8 T',
+    'NK', 'FCGR3A Monocytes',
+    'Dendritic', 'Megakaryocytes']
+adata.rename_categories('leiden', new_cluster_names)
+sc.pl.umap(adata, color='leiden', legend_loc='on data', title='', frameon=False)
+```
+![image](https://user-images.githubusercontent.com/112565216/188464735-d76909ec-8f02-441d-b853-c6eee1149193.png)
+
