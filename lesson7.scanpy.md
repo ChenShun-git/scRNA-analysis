@@ -104,7 +104,8 @@ sc.tl.umap(adata)
 sc.tl.leiden(adata)
 sc.pl.umap(adata, color='leiden')
 ```
-![image](https://user-images.githubusercontent.com/112565216/188350479-22b237cf-f7c8-4eb6-ba80-e6e5fb8746ee.png)
+![image](https://user-images.githubusercontent.com/112565216/188641665-87591af2-2af2-40ea-8610-fc5be0df7105.png)
+
 
 ### 5.标记cluster
 确定marker基因（※）
