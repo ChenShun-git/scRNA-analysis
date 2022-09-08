@@ -49,7 +49,7 @@ df1<- cbind(df1,as.data.frame(scRNA@meta.data))
 ![image](https://user-images.githubusercontent.com/112565216/189041820-59ac0cf4-98b1-4e46-8c23-92dcc558bc37.png)
 
 ```
-#自定义一个计算density的函数
+#自定义一个计算density的函数（※）
 get_density <-function(x,y,...){
   dens <- MASS::kde2d(x,y,...)
   ix <- findInterval(x,dens$x)
