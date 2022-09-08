@@ -35,13 +35,22 @@ cells_rankings <- AUCell_buildRankings(scRNA1@assays$RNA@data,nCores=1, plotStat
 #### ③下载用于参考的细胞通路对应的基因
 在GSEA broad上进行下载
 ![GSEA broad](https://upload-images.jianshu.io/upload_images/28382212-1c5398c0191a0db2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
->通路数据库简介
+
+**通路数据库简介**
+
 1.GO（gene ontology，即基因本体论）：基因本体论是对基因在不同维度和不同层次上的描述
+
 a. Cellular Component(CC):解释基因在细胞中的位置
+
 b. Biological Process(BP):说明该基因参与了哪些生物学过程
+
 c. Molecular Function(MF):说明该基因在分子层面的功能
+
 2.KEGG:对细胞所有pathway进行富集分析,KEGG数据库共有186条pathway
+
 **二者的区别在于数据库不同**
+
+
 
 下载KEGG pathway数据后进行读取
 ```
