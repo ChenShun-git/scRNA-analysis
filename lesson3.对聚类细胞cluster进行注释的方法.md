@@ -44,7 +44,7 @@ scRNA_harmony <- RenameIdents(scRNA_harmony,"7"="Osteoblastic")
 
 
 # 软件注释
-##1.SingleR package
+## 1.SingleR package
 用已知的数据注释未知数据
 ### 第一步 加载需要的package并load前文已经处理好的scRNA.harmony数据
 ```
