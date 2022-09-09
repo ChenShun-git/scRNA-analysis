@@ -27,17 +27,20 @@ DimPlot(scRNA,label=TRUE)
 
 # Seurat对象的结构
 ![Seurat对象.png](https://upload-images.jianshu.io/upload_images/28382212-41f01e1d7e8b2af3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 Seurat对象最重要的成分是assays与meta.data
 - assays主要保存了所有细胞的UMI矩阵
 - meta.data
-![meta.data.png](https://upl
-oad-images.jianshu.io/upload_images/28382212-d431117716e36e9d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+![meta.data.png](https://upload-images.jianshu.io/upload_images/28382212-d431117716e36e9d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 - orig.ident：储存细胞的样本来源，也可以自行修改
 - ncount_RNA：每个细胞的UMI数量
 - nFeature_RNA：每个细胞检测到的基因数
 
 # UMI与barcodes
 ![barcode与UMI.png](https://upload-images.jianshu.io/upload_images/28382212-55cfc0d7ad22c0a0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 图中绿色片段是barcode，右边紧接着就是UMI。每一种barcode代表一个细胞，每一种UMI代表一个count
 
 # marker基因的寻找
