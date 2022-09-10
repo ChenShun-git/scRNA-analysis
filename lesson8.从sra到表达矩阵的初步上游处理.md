@@ -17,4 +17,9 @@ fastq-dump SRR11955379 --gzip --split-files -O out
 fasterq-dump是fastq-dump的改良版，比fastq-dump速度更快，使用方式相似，但是没有gzip选项，如果想输出压缩文件，常需要与多线程压缩工具pigz联合使用
 
 parallel-fastq-dump也可多线程运行多个fastq-dump，threads参数可以指定运行的线程数，与fastq-dump相同也可以指定压缩格式
+
+此处使用fasterq-dump将sra文件转化为fastq文件
+```
+fasterq-dump SRR11955379 --split-spot
+```
 # 运行cellranger
