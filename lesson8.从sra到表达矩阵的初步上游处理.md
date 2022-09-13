@@ -30,12 +30,20 @@ pigz -p 12 SRR11955379_1.fastq
 pigz -p 12 SRR11955379_2.fastq
 ```
 得到SRR11955379_1.fastq.gz与SRR11955379_2.fastq.gz
-为了让cellranger可以识别出得到的fastq文件，需要对fastq文件进行重命名，使其符合illumination下fastq文件的命名规则
+
+为了让cellranger可以识别出得到的fastq文件，需要对fastq文件进行重命名，使其符合illumina下fastq文件的命名规则
+
 一般命名格式为：SampleName_S1_L001_R1_001.fastq.gz
+
 第一部分：SampleName，样本名，与上机时在Sample Sheet中填写的一致
+
 第二部分：S1，S***，S后跟的数字与样本在Sample Sheet中的顺序一致，从1开始。不能分配到确定样本的read会归到S0（Undetermined_S0）
+
 第三部分：L00*，泳道lane的编号
+
 第四部分：R*，R1表示read1，R2表示read2。R1和R2为paired end reads。同一个样本的配对的FASTQ，只有这个地方不同
+
 第五部分：001，通常为001
+
 此处将文件重命名为Sample1_S1_L001_R1_001.fastq.gz与Sample1_S1_L001_R2_001.fastq.gz
 # 运行cellranger
