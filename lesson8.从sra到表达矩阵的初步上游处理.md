@@ -47,3 +47,12 @@ pigz -p 12 SRR11955379_2.fastq
 
 此处将文件重命名为Sample1_S1_L001_R1_001.fastq.gz与Sample1_S1_L001_R2_001.fastq.gz
 # 运行cellranger
+```
+cellranger count --id=CellrangerResult --fastqs=/media/Rome/home/guest/chens/lessons/lesson2 --transcriptome=/media/Rome/home/guest/chens/refdata-gex-GRCh38-2020-A
+```
+id指示结果输出的文件名
+
+fastqs指示用于分析的fastq文件的所在目录
+
+transcriptome指示参考基因组文件
+
