@@ -18,3 +18,12 @@ run10x是针对cellranger结果进行分析，给出的三个路径分别是：�
 
 ## 2.安装并打开rstudio-server
 根据rstudio官网指示下载R与rstudio-server后用"sudo rstudio-server start"运行
+如果需要更换不同版本的R，则在终端内输入：
+```
+sudo vi /etc/rstudio/rserver.conf
+```
+并将目标R版本所在的路径输入其中
+```
+rsession-which-r=/home/chen/anaconda3/envs/velocyto.r/bin/R
+```
+
