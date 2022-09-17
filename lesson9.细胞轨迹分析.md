@@ -1,0 +1,193 @@
+# RNA velocity
+RNA velocity是指未经剪切的前体mRNA与已剪切的成熟mRNA含量的比例，来预测基因的动态变化。一般来说，如果未经剪切的前体mRNA较多，则该基因的表达量增加，反之则表达量降低。利用前体mRNA与成熟mRNA丰度的比值可以
+## velocyto
+### 1.velocyto生成loom文件
+loom文件中包含了基因的成熟与未成熟的转录本的数量信息，需要利用cellranger结果中的filtered_feature_bc_matrix生成
+
+![image](https://user-images.githubusercontent.com/112565216/189914551-7a87b561-182d-44c3-bc74-3c1cb83953d4.png)
+
+但要区分成熟的mRNA与未成熟mRNA还需要利用bam文件，bam文件是fastq文件与参考基因组比对的结果，而10x matrix文件则是定量的结果
+
+**生成loom文件**
+```
+velocyto run10x -m lessons/lesson2/hg38_rmsk.gtf lessons/lesson2/CellrangerResult refdata-gex-GRCh38-2020-A/genes/genes.gtf
+```
+run10x是针对cellranger结果进行分析，给出的三个路径分别是：重复区域注释文件（需要在UCSC→tools→table browser中下载），cellranger结果，参考基因组的索引
+![image](https://user-images.githubusercontent.com/112565216/190146633-30422b3a-4831-471d-8587-37e9b04783ba.png)
+
+运行结束后在储存cellranger结果的文件夹中生成一个loom文件
+
+### 2.安装并打开rstudio-server
+根据rstudio官网指示下载R与rstudio-server后用"sudo rstudio-server start"运行
+如果需要更换不同版本的R，则在终端内输入：
+```
+sudo vi /etc/rstudio/rserver.conf
+```
+并将目标R版本所在的路径输入其中
+```
+rsession-which-r=/home/chen/anaconda3/envs/velocyto.r/bin/R
+```
+
+### 3.进行RNA velocity分析
+**通过loom文件进行RNA velocity分析**
+```
+library(Seurat)
+library(devtools)
+library(velocyto.R)
+library(SeuratWrappers)
+setwd("/mnt/c/lesson")
+
+#读取loom文件
+ldat <- ReadVelocity(file="CellrangerResult.loom")
+```
+![1663417927(1)](https://user-images.githubusercontent.com/112565216/190856878-9d1eff84-4705-4c80-9cf7-8460aa00d9b5.png)
+
+
+```
+#转化为seurat对象
+bm <- as.Seurat(x=ldat)
+#对成熟的RNA归一化处理，降维聚类
+bm <- SCTransform(object = bm,assay="spliced")
+bm <- RunPCA(object = bm,verbose=FALSE)
+bm <- FindNeighbors(object = bm,dims=1:20)
+bm <- FindClusters(object = bm)
+bm <- RunUMAP(object = bm,dims=1:20)
+
+#挑选前1000个细胞加快分析速度
+bm <- bm[,1:1000]
+
+#进行RNA velocity分析
+bm <-RunVelocity(object = bm,deltaT=1,kCells=25,fit.quantile=0.02)
+#根据聚类得到的cluster数量选择颜色数目
+ident.colors <- (scales::hue_pal())(n = length(levels(bm)))
+#给每个cluster分配一种颜色
+names(ident.colors) <- levels(x = bm)
+#给每个细胞分配一种颜色（同色系渐变色）
+cell.colors <- ident.colors[Idents(bm)]
+names(cell.colors) <- colnames(bm)
+#RNA velocity结果可视化
+show.velocity.on.embedding.cor(emb = Embeddings(object = bm, reduction = "umap"), vel = Tool(object = bm, slot = "RunVelocity"), n = 200, scale = "sqrt", cell.colors = ac(x = cell.colors, alpha = 0.5), 
+                               cex = 0.8, arrow.scale = 3, show.grid.flow = TRUE, min.grid.cell.mass = 0.5, grid.n = 40, arrow.lwd = 1, 
+                               do.par = FALSE, cell.border.alpha = 0.1)
+```
+![image](https://user-images.githubusercontent.com/112565216/190856163-6c615fef-e5ed-4ffd-ad10-a48259e6af8b.png)
+
+但使用loom文件的聚类结果与使用seurat对象聚类得到的结果明显不同，为了将两者统一，接下来需要用seurat对象进行RNA velocity分析
+
+**通过seurat对象进行RNA velocity分析**
+
+准备已经降维聚类的seurat对象
+```
+#在cellranger结果的filter_feature_bc_matrix中含有可被10x读取的barcode,matrix和features等信息，利用其生成seurat对象
+scRNA.counts <- Read10X("filter_feature_bc_matrix/")
+scRNA = CreateSeuratObject(scRNA.counts ,min.cells = 3,project="os", min.features = 300)
+###质控（线粒体基因与红细胞基因）
+#计算细胞中线粒体基因比例
+scRNA[["percent.mt"]] <- PercentageFeatureSet(scRNA, pattern = "^MT-")
+#计算红细胞比例
+HB.genes <- c("HBA1","HBA2","HBB","HBD","HBE1","HBG1","HBG2","HBM","HBQ1","HBZ")
+HB_m <- match(HB.genes, rownames(scRNA@assays$RNA)) 
+HB.genes <- rownames(scRNA@assays$RNA)[HB_m] 
+HB.genes <- HB.genes[!is.na(HB.genes)] 
+scRNA[["percent.HB"]]<-PercentageFeatureSet(scRNA, features=HB.genes)
+#过滤
+scRNA1 <- subset(scRNA, subset = nFeature_RNA > 300& nFeature_RNA < 7000 & percent.mt < 10 & percent.HB < 3 & nCount_RNA < 100000)
+###降维聚类
+scRNA1 <- NormalizeData(scRNA1, normalization.method = "LogNormalize", scale.factor = 10000)
+scRNA1 <- FindVariableFeatures(scRNA1, selection.method = "vst", nfeatures = 3000) 
+scRNA1 <- ScaleData(scRNA1)
+#查看细胞周期对聚类结果的影响
+#细胞周期评分
+g2m_genes = cc.genes$g2m.genes
+g2m_genes = CaseMatch(search = g2m_genes, match = rownames(scRNA1))
+s_genes = cc.genes$s.genes
+s_genes = CaseMatch(search = s_genes, match = rownames(scRNA1))
+scRNA1 <- CellCycleScoring(object=scRNA1,g2m.features=g2m_genes,s.features=s_genes)
+#查看细胞周期基因对细胞聚类的影响
+scRNAa <- RunPCA(scRNA1, features = c(s_genes, g2m_genes))
+p <- DimPlot(scRNAa, reduction = "pca", group.by = "Phase")
+p
+```
+![image](https://user-images.githubusercontent.com/112565216/190856486-eadd7191-2458-4e67-9e9d-ee5274482a2e.png)
+
+根据p可知细胞周期对细胞聚类的影响不大
+```
+###进行pca,umap与tsne降维聚类
+scRNA1 <- RunPCA(scRNA1, features = VariableFeatures(scRNA1))
+#选择dims数
+ElbowPlot(scRNA1, ndims=30, reduction="pca")
+```
+![image](https://user-images.githubusercontent.com/112565216/190856539-39efd134-f436-4cfe-a82b-8a8437189921.png)
+
+```
+#根据ElbowPlot选择大约20个pc数
+pc.num=1:20
+scRNA1 <- FindNeighbors(scRNA1, dims = pc.num) 
+scRNA1 <- FindClusters(scRNA1, resolution = 1.0)
+scRNA1 = RunTSNE(scRNA1, dims = pc.num)
+scRNA1 <- RunUMAP(scRNA1, dims = pc.num)
+plot1 = DimPlot(scRNA1, reduction = "tsne") 
+plot2 = DimPlot(scRNA1, reduction = "umap")
+```
+![image](https://user-images.githubusercontent.com/112565216/190856691-715d0fbe-7368-4a49-8bff-a29a0901cceb.png)
+![image](https://user-images.githubusercontent.com/112565216/190856701-1c4d6281-4a84-42af-84f6-3d599d567833.png)
+
+```
+###随机抽取500个细胞进行RNA velocity分析（主要是为了缩短分析时间）
+seurat.object=scRNA1
+seurat.object=seurat.object[,sample(colnames(seurat.object),500)]  
+#读取loom文件
+ldat <- read.loom.matrices("CellrangerResult.loom")
+emat <- ldat$spliced
+nmat <- ldat$unspliced
+```
+```
+#将loom文件列名与seurat对象列名统一
+colnames(emat)[1:10]
+colnames(seurat.object)[1:10]
+```
+![1663418355(1)](https://user-images.githubusercontent.com/112565216/190857242-bfa9f7e4-9d49-497f-8624-739eaf49da6a.png)
+
+```
+colnames(emat) <- paste(substring(colnames(emat),18,33),"-1",sep="")
+colnames(nmat) <- paste(substring(colnames(nmat),18,33),"-1",sep="")
+```
+
+```
+#提取随机抽取的500个细胞的loom结果
+emat = emat[,colnames(seurat.object)]
+nmat = nmat[,colnames(seurat.object)]
+#通过umap降维的两个维度计算细胞距离
+emb <- seurat.object@reductions$umap@cell.embeddings
+cell.dist <- as.dist(1-armaCor(t(seurat.object@reductions$umap@cell.embeddings)))
+#计算RNA velocity
+rvel.cd <- gene.relative.velocity.estimates(emat,nmat,deltaT=2,
+                                            kCells=10,
+                                            cell.dist=cell.dist,
+                                            fit.quantile=0.02,
+                                            n.cores=12)
+```
+
+```
+#可视化
+library(ggplot2)
+gg <- UMAPPlot(seurat.object)
+gg
+```
+![image](https://user-images.githubusercontent.com/112565216/190858121-6866ae68-9e22-46ab-9ce6-1a393afe5d94.png)
+
+```
+#给每个细胞设定一种颜色
+colors <- as.list(ggplot_build(gg)$data[[1]]$colour)
+names(colors) <- rownames(emb)
+
+p1 <- show.velocity.on.embedding.cor(emb,rvel.cd,n=30,scale='sqrt',
+                                     cell.colors=ac(colors,alpha=0.5),
+                                     cex=0.8,arrow.scale=2,show.grid.flow=T,
+                                     min.grid.cell.mass=1.0,grid.n=50,arrow.lwd=1,
+                                     do.par=F,cell.border.alpha = 0.1,
+                                     n.cores=24,main="Cell Velocity")
+
+p1
+```
+![image](https://user-images.githubusercontent.com/112565216/190858163-bebc8bd6-3fa3-4b7a-a25f-b7e6585461d4.png)
