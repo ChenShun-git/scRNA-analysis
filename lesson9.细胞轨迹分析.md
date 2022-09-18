@@ -191,3 +191,113 @@ p1 <- show.velocity.on.embedding.cor(emb,rvel.cd,n=30,scale='sqrt',
 p1
 ```
 ![image](https://user-images.githubusercontent.com/112565216/190858163-bebc8bd6-3fa3-4b7a-a25f-b7e6585461d4.png)
+
+# scVelo
+在jupyter notebook中运行scVelo
+```
+#加载需要的模块
+import scvelo as scv
+import scanpy as sc
+#设置图片规格
+scv.settings.verbosity = 3  
+scv.settings.presenter_view = True  
+scv.set_figure_params('scvelo')
+#读取loom文件
+adata = scv.read("CellrangerResult.loom",cache=False)
+#去除基因名重复
+adata.var_names_make_unique
+#查看成熟mRNA与前体mRNA比例
+scv.pl.proportions(adata)
+```
+![image](https://user-images.githubusercontent.com/112565216/190894147-5f9e7e8c-4a22-4fac-820f-0c5931ca9720.png)
+
+```
+#过滤基因（如果该基因只被很少的细胞表达则被过滤）
+scv.pp.filter_genes(adata,min_shared_counts=30)
+#对每个细胞进行归一化处理
+scv.pp.normalize_per_cell(adata)
+#计算离散度,得到高变基因
+scv.pp.filter_genes_dispersion(adata,n_top_genes=2000)
+scv.pp.log1p(adata)
+```
+以上4步可被一个函数代替 **scv.pp.filter_and_normalize**
+
+```
+#PCA降维
+scv.pp.moments(adata,n_pcs=30,n_neighbors=30)
+#计算RNA velocity
+scv.tl.velocity(adata)#构建velocity graph
+scv.tl.velocity_graph(adata)
+```
+```
+###进行umap降维
+#构建无向有权图
+scv.pp.neighbors(adata,n_neighbors=30,n_pcs=40)
+#聚类
+sc.tl.leiden(adata)
+#降维
+scv.tl.umap(adata)
+#可视化
+sc.pl.umap(adata,color="leiden")
+```
+![image](https://user-images.githubusercontent.com/112565216/190895115-cc66f9be-c3f9-4dc1-9268-777950db47b0.png)
+
+```
+#RNA velocity可视化
+scv.pl.velocity_embedding_stream(adata,basis="umap",color=["leiden","initial_size_spliced"])
+```
+![image](https://user-images.githubusercontent.com/112565216/190895340-284e970d-9903-4c9c-8776-4b67bb96b365.png)
+
+左图表示不同的cluster之间存在的分化顺序关系，右图则表示经过剪切的成熟mRNA含量在各个cluster之间的丰度情况
+
+```
+#识别分化过程中重要基因
+scv.tl.rank_velocity_genes(adata,groupby="leiden",min_corr=0.3)
+df=scv.DataFrame(adata.uns["rank_velocity_genes"]["names"])
+df.head()
+```
+![image](https://user-images.githubusercontent.com/112565216/190896242-56e97c73-b46a-4dd8-af1c-35ae20a80789.png)
+
+```
+#对特定基因可视化
+scv.pl.velocity(adata,["DOCK4"],dpi=120,color=["leiden"])
+```
+![image](https://user-images.githubusercontent.com/112565216/190896272-002156d2-a735-4dc9-9ed9-d9e3a2533ab4.png)
+
+从图2和图3可以看出基因表达量和RNA velocity有较强的相关性
+
+```
+#连贯性分析(代表细胞间相互转换的概率)
+scv.pl.velocity_graph(adata,threshold=1,color=["leiden"])
+```
+![image](https://user-images.githubusercontent.com/112565216/190896453-e49c4c18-11d4-4a5b-874a-d2eae239f285.png)
+
+线条的多少代表了细胞间的连接度，连接度越高，细胞间发生转换的概率越高
+
+```
+#pseudotime分析
+scv.tl.velocity_pseudotime(adata)
+scv.pl.scatter(adata,color="velocity_pseudotime",cmap="gnuplot")
+```
+![image](https://user-images.githubusercontent.com/112565216/190897230-aad9d7b9-bca3-48ca-b2c3-55ab2f5f8385.png)
+
+深色细胞向浅色细胞方向发育分化
+
+```
+#PAGA分析
+adata.uns["neighbors"]["distances"]=adata.obsp["distances"]
+adata.uns["neighbors"]["connectivities"]=adata.obsp["connectivities"]
+scv.tl.paga(adata,groups="leiden")
+scv.pl.paga(adata,basis="umap",size=50,alpha=1,
+           min_edge_width=2,node_size_scale=1.5)
+```
+![image](https://user-images.githubusercontent.com/112565216/190897388-75f69701-10f6-45a5-847b-b1b2ce48c6ae.png)
+
+箭头方向代表细胞分化方向
+
+```
+#查看单个基因的velocity结果
+scv.pl.velocity_graph(adata,color="GNLY")
+```
+![image](https://user-images.githubusercontent.com/112565216/190897772-ed6fc264-7647-4612-849d-40f0680f8076.png)
+
