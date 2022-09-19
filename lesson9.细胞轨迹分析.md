@@ -304,6 +304,75 @@ scv.pl.velocity_graph(adata,color="GNLY")
 # PHATE
 PHATE是Seurat pipeline中使用的tsne 与umap降维以外的另一种降维可视化方式，PHATE的优势在于可兼顾全局特征（cluster之间的联系）与局部特征（单个cluster内部的关系），且高效利用计算资源，可计算大批量数据，在可视化结果中平滑过渡代表着细胞从一种状态到另一种状态的过渡。PHATE常用语研究物种进化与细胞分化。
 
+## 利用R进行PHATE降维
 ```
-#安装
+#安装需要的package
+##系统报错改为英文
+Sys.setenv(LANGUAGE = "en")
+##禁止转化为因子
+options(stringsAsFactors = FALSE)
+##清空环境
+rm(list=ls())
+library(reticulate)
+reticulate::py_install("phate", pip=TRUE)
+devtools::install_github("KrishnaswamyLab/phateR")
+if (!require(viridis)) install.packages("viridis")
+if (!require(readr)) install.packages("readr")
+if (!require(Rmagic)) install.packages("Rmagic")
+library(phateR)
+library(ggplot2)
+library(readr)
+library(viridis)
+library(Rmagic)
+
+#读取数据
+setwd("C:/Users/86269/Desktop/shun.C/single_cell")
+bmmsc <- read_csv("BMMC_myeloid.csv")
+bmmsc <- bmmsc[,2:ncol(bmmsc)]
 ```
+![image](https://user-images.githubusercontent.com/112565216/190995663-fa8bcc18-006b-4aeb-8923-503af7dce602.png)
+
+```
+#过滤低表达基因
+keep_cols <- colSums(bmmsc > 0) > 10
+bmmsc <- bmmsc[,keep_cols]
+#过滤基因表达量过少的细胞
+keep_rows <- rowSums(bmmsc) > 1000
+bmmsc <- bmmsc[keep_rows,]
+#消除测序深度影响
+bmmsc <- library.size.normalize(bmmsc)
+bmmsc <- sqrt(bmmsc)
+```
+
+```
+#进行PCA降维
+m <-prcomp(bmmsc)
+bmmsc_PCA <- as.data.frame(m$x)
+```
+![image](https://user-images.githubusercontent.com/112565216/191009155-2549f69c-fd9e-46db-b491-b1024311c674.png)
+![image](https://user-images.githubusercontent.com/112565216/191009214-9f279e3d-a522-4ef6-9d3a-2743bef5c504.png)
+
+```
+#PHATE可视化(PHATE是直接运算，而不是基于PCA结果运算)
+bmmsc_PHATE <- phate(bmmsc, knn=4, decay=100, t=10, init=bmmsc_PHATE)
+ggplot(bmmsc_PHATE) +
+  geom_point(aes(PHATE1, PHATE2, color=bmmsc$Mpo)) +
+  labs(color="Mpo") +
+  scale_color_viridis(option="B")
+```
+![image](https://user-images.githubusercontent.com/112565216/191016201-36ad71cc-0b1a-4a21-b164-6f569befecf0.png)
+
+```
+#利用MAGIC还原基因表达
+bmmsc_MAGIC <- magic(bmmsc, t=4)
+ggplot(bmmsc_PHATE) +
+  geom_point(aes(x=PHATE1, y=PHATE2, color=bmmsc_MAGIC$result$Ifitm1)) +
+  scale_color_viridis(option="B") +
+  labs(color="Ifitm1")
+```
+![image](https://user-images.githubusercontent.com/112565216/191020531-cd051ded-4710-4fd6-9a21-0c9a2cf882af.png)
+
+## 用python进行PHATE分析
+
+
+## 在
