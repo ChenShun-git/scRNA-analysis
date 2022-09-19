@@ -301,3 +301,9 @@ scv.pl.velocity_graph(adata,color="GNLY")
 ```
 ![image](https://user-images.githubusercontent.com/112565216/190897772-ed6fc264-7647-4612-849d-40f0680f8076.png)
 
+# PHATE
+PHATE是Seurat pipeline中使用的tsne 与umap降维以外的另一种降维可视化方式，PHATE的优势在于可兼顾全局特征（cluster之间的联系）与局部特征（单个cluster内部的关系），且高效利用计算资源，可计算大批量数据，在可视化结果中平滑过渡代表着细胞从一种状态到另一种状态的过渡。PHATE常用语研究物种进化与细胞分化。
+
+```
+#安装
+```
