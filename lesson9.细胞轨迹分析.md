@@ -373,6 +373,101 @@ ggplot(bmmsc_PHATE) +
 ![image](https://user-images.githubusercontent.com/112565216/191020531-cd051ded-4710-4fd6-9a21-0c9a2cf882af.png)
 
 ## 用python进行PHATE分析
+```
+#加载需要的module
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import phate
+import scprep
+import magic
+import os
+sparse=True
+#读取数据
+T1=scprep.io.load_10X("scRNAseq/scRNAseq/T0_1A")
+T2=scprep.io.load_10X("scRNAseq/scRNAseq/T2_3B")
+T3=scprep.io.load_10X("scRNAseq/scRNAseq/T4_5C")
+T4=scprep.io.load_10X("scRNAseq/scRNAseq/T6_7D")
+T5=scprep.io.load_10X("scRNAseq/scRNAseq/T8_9E")
+```
+```
+T1.head()
+```
+![image](https://user-images.githubusercontent.com/112565216/191179458-d8860525-8961-41f2-9b05-41e569a605f6.png)
+
+```
+#过滤library size过大或过小的细胞
+filtered_batches=[]
+for batch in [T1,T2,T3,T4,T5]:
+    batch =scprep.filter.filter_library_size(batch,percentile=20,keep_cells="above")
+    batch=scprep.filter.filter_library_size(batch,percentile=75,keep_cells="below")
+    filtered_batches.append(batch)
+#合并
+EBT_counts, sample_labels=scprep.utils.combine_batches(
+    filtered_batches,
+    ["Day 00-03","Day 06-09","Day 12-15","Day 18-21","Day 24-27"],
+    append_to_cell_names=True
+)
+EBT_counts.head()
+```
+![image](https://user-images.githubusercontent.com/112565216/191179634-bf12e392-8355-4793-89a6-db29ee70cb75.png)
+
+```
+#过滤表达量过少的基因
+EBT_counts=scprep.filter.filter_rare_genes(EBT_counts,min_cells=10)
+#归一化处理
+EBT_counts=scprep.normalize.library_size_normalize(EBT_counts)
+#过滤线粒体含量过高的细胞
+mito_genes=scprep.select.get_gene_set(EBT_counts,starts_with="MT-")
+scprep.plot.plot_gene_set_expression(EBT_counts,genes=mito_genes,percentile=90)
+plt.show()
+EBT_counts, sample_labels = scprep.filter.filter_gene_set_expression(
+    EBT_counts, sample_labels, genes=mito_genes, 
+    percentile=90, keep_cells='below')
+```
+![image](https://user-images.githubusercontent.com/112565216/191182104-75290ce6-f18c-4a5f-9964-69ca727e7a22.png)
+
+```
+#进行log transformation
+EBT_counts=scprep.transform.sqrt(EBT_counts)
+```
+
+```
+#进行phate可视化
+phate_operator=phate.PHATE(n_jobs=2)
+Y_phate=phate_operator.fit_transform(EBT_counts)
+scprep.plot.scatter2d(Y_phate, c=sample_labels, figsize=(12,8), cmap="Spectral",
+                      ticks=False, label_prefix="PHATE")
+plt.show()
+```
+![image](https://user-images.githubusercontent.com/112565216/191183853-2e3ec951-643a-420f-a1c8-9d843553f520.png)
+
+```
+#进行3d的phate可视化
+phate_operator.set_params(n_components=3)
+Y_phate_3d=phate_operator.transform()
+scprep.plot.scatter3d(Y_phate_3d,c=sample_labels,cmap="Spectral",
+                      ticks=False,label_prefix="PHATE")
+```
+![image](https://user-images.githubusercontent.com/112565216/191184375-9e0f8b49-dba0-4172-9e1b-887cdc31586f.png)
+
+```
+#利用MAGIC算法还原数据缺失值
+magic_op=magic.MAGIC()
+chronic_magic=magic_op.fit_transform(EBT_counts,genes="all_genes")
+```
+![image](https://user-images.githubusercontent.com/112565216/191189612-067ffdba-a0cc-4bfd-88d0-2d232f64db46.png)
 
 
-## 在
+```
+#对列名进行修改
+chronic_magic.columns=[i.split(" ")[0] for i in chronic_magic.columns.tolist()]
+```
+![image](https://user-images.githubusercontent.com/112565216/191193086-5d6178d0-9154-42a6-848c-d8a56db79c04.png)
+
+
+```
+scprep.plot.scatter_2d(Y_phate,c=chronic_magic["A2M"],cmap="Reds",
+                      ticks=False,label_prefix="PHATE",title="A2M"+"magic expression")
+```
+![image](https://user-images.githubusercontent.com/112565216/191193158-36c8b090-4151-4719-81d5-34c7fda1cca5.png)
