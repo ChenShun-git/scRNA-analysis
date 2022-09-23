@@ -389,3 +389,5 @@ DimPlot(combined, group.by = 'dataset', pt.size = 0.1)
 ![image](https://user-images.githubusercontent.com/112565216/191891811-47110e9c-64a4-403f-b534-3a6c50cd0c26.png)
 
 对比可看出不经过common peak set整合的合并结果有明显批次效应
+
+# 3.scRNAseq与scATACseq整合分析
