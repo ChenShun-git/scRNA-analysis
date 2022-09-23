@@ -181,6 +181,8 @@ CoveragePlot(
 ```
 gr <- GRanges(seqnames = "chr1", ranges = IRanges(start = c(20, 70, 300), end = c(120, 200, 400)))
 ```
+![image](https://user-images.githubusercontent.com/112565216/191891595-84dcd219-a648-4844-b418-fd052f588cd6.png)
+![image](https://user-images.githubusercontent.com/112565216/191891619-93d4aa0b-c0cd-45bc-bd91-373a811043f2.png)
 ![image](https://user-images.githubusercontent.com/112565216/191889859-96ac49b9-8ebb-4170-b4a3-b244395f79b7.png)
 
 ## 1.创建共有peak集
@@ -348,3 +350,42 @@ combined <- RunSVD(combined)
 combined <- RunUMAP(combined, dims = 2:50, reduction = 'lsi')
 DimPlot(combined, group.by = 'dataset', pt.size = 0.1)
 ```
+![image](https://user-images.githubusercontent.com/112565216/191891640-de51261e-d4e9-47c4-82dd-6fddd0ade75a.png)
+
+对比没有经过common peak set直接合并的聚类结果
+```
+counts.500 <- Read10X_h5("../vignette_data/pbmc500/atac_pbmc_500_nextgem_filtered_peak_bc_matrix.h5")
+counts.1k <- Read10X_h5("../vignette_data/pbmc1k/atac_pbmc_1k_nextgem_filtered_peak_bc_matrix.h5")
+counts.5k <- Read10X_h5("../vignette_data/pbmc5k/atac_pbmc_5k_nextgem_filtered_peak_bc_matrix.h5")
+counts.10k <- Read10X_h5("../vignette_data/pbmc10k/atac_pbmc_10k_nextgem_filtered_peak_bc_matrix.h5")
+
+pbmc500_assay <- CreateChromatinAssay(counts = counts.500, sep = c(":", "-"), min.features = 500)
+pbmc500 <- CreateSeuratObject(pbmc500_assay, assay = "peaks")
+pbmc1k_assay <- CreateChromatinAssay(counts = counts.1k, sep = c(":", "-"), min.features = 500)
+pbmc1k <- CreateSeuratObject(pbmc1k_assay, assay = "peaks")
+pbmc5k_assay <- CreateChromatinAssay(counts = counts.5k, sep = c(":", "-"), min.features = 500)
+pbmc5k <- CreateSeuratObject(pbmc5k_assay, assay = "peaks")
+pbmc10k_assay <- CreateChromatinAssay(counts = counts.10k, sep = c(":", "-"), min.features = 1000)
+pbmc10k <- CreateSeuratObject(pbmc10k_assay, assay = "peaks")
+
+pbmc500$dataset <- 'pbmc500'
+pbmc1k$dataset <- 'pbmc1k'
+pbmc5k$dataset <- 'pbmc5k'
+pbmc10k$dataset <- 'pbmc10k'
+
+combined <- merge(
+  x = pbmc500,
+  y = list(pbmc1k, pbmc5k, pbmc10k),
+  add.cell.ids = c("500", "1k", "5k", "10k")
+)
+
+combined <- RunTFIDF(combined)
+combined <- FindTopFeatures(combined, min.cutoff = 20)
+combined <- RunSVD(combined)
+combined <- RunUMAP(combined, dims = 2:50, reduction = 'lsi')
+DimPlot(combined, group.by = 'dataset', pt.size = 0.1)
+
+```
+![image](https://user-images.githubusercontent.com/112565216/191891811-47110e9c-64a4-403f-b534-3a6c50cd0c26.png)
+
+对比可看出不经过common peak set整合的合并结果有明显批次效应
