@@ -175,3 +175,9 @@ CoveragePlot(
 ```
 ![6228f110a66c9bf0ccb25de3be3577f](https://user-images.githubusercontent.com/112565216/191747236-fa415a07-de85-401c-a1f3-ba114fe5e1a9.png)
 
+# 多个样本合并
+当多个样品单独处理时，得到的peak一般不会完全一致，因此如果要合并多个样本，需要create a common peak set
+合并多个peak可以用GenomicRanges::reduce或GenomicRanges::disjoin,二者的区别如下
+```
+gr <- GRanges(seqnames = "chr1", ranges = IRanges(start = c(20, 70, 300), end = c(120, 200, 400)))
+```
