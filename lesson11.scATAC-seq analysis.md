@@ -226,7 +226,7 @@ peakwidths <- width(combined.peaks)
 combined.peaks <- combined.peaks[peakwidths  < 10000 & peakwidths > 20]
 ```
 
-## 2.将合并后的peak值量化
+## 2.将合并后的peak set中每个peak上比对到的read count量化
 **创建fragment对象**
 ```
 #读取metadata数据
@@ -288,7 +288,7 @@ frags.10k <- CreateFragmentObject(
 
 ```
 
-**将peak值量化**
+**将peak上的read count量化**
 ```
 pbmc500.counts <- FeatureMatrix(
   fragments = frags.500,
