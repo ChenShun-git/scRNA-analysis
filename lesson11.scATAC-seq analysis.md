@@ -175,4 +175,176 @@ CoveragePlot(
 ```
 ![6228f110a66c9bf0ccb25de3be3577f](https://user-images.githubusercontent.com/112565216/191747236-fa415a07-de85-401c-a1f3-ba114fe5e1a9.png)
 
+# 多个样本合并
+当多个样品单独处理时，得到的peak一般不会完全一致，因此如果要合并多个样本，需要create a common peak set
+合并多个peak可以用GenomicRanges::reduce或GenomicRanges::disjoin,二者的区别如下
+```
+gr <- GRanges(seqnames = "chr1", ranges = IRanges(start = c(20, 70, 300), end = c(120, 200, 400)))
+```
+![image](https://user-images.githubusercontent.com/112565216/191889859-96ac49b9-8ebb-4170-b4a3-b244395f79b7.png)
 
+## 1.创建共有peak集
+```
+library(Signac)
+library(Seurat)
+library(GenomicRanges)
+library(future)
+
+plan("multiprocess", workers = 4)
+options(future.globals.maxSize = 50000 * 1024^2) # for 50 Gb RAM
+
+#读取每个样品的peak set
+peaks.500 <- read.table(
+  file = "atac_pbmc_500_nextgem_peaks.bed",
+  col.names = c("chr", "start", "end")
+)
+peaks.1k <- read.table(
+  file = "atac_pbmc_1k_nextgem_peaks.bed",
+  col.names = c("chr", "start", "end")
+)
+peaks.5k <- read.table(
+  file = "atac_pbmc_5k_nextgem_peaks.bed",
+  col.names = c("chr", "start", "end")
+)
+peaks.10k <- read.table(
+  file = "atac_pbmc_10k_nextgem_peaks.bed",
+  col.names = c("chr", "start", "end")
+)
+
+#将peak set文件转化为GenomicRange文件
+gr.500 <- makeGRangesFromDataFrame(peaks.500)
+gr.1k <- makeGRangesFromDataFrame(peaks.1k)
+gr.5k <- makeGRangesFromDataFrame(peaks.5k)
+gr.10k <- makeGRangesFromDataFrame(peaks.10k)
+
+#将各个样品的peak合并
+combined.peaks <- reduce(x = c(gr.500, gr.1k, gr.5k, gr.10k))
+#根据peak的长度过滤一部分长度过大或过小的peak
+peakwidths <- width(combined.peaks)
+combined.peaks <- combined.peaks[peakwidths  < 10000 & peakwidths > 20]
+```
+
+## 2.将合并后的peak值量化
+**创建fragment对象**
+```
+#读取metadata数据
+md.500 <- read.table(
+  file = "atac_pbmc_500_nextgem_singlecell.csv",
+  stringsAsFactors = FALSE,
+  sep = ",",
+  header = TRUE,
+  row.names = 1
+)[-1, ] # remove the first row
+
+md.1k <- read.table(
+  file = "atac_pbmc_1k_nextgem_singlecell.csv",
+  stringsAsFactors = FALSE,
+  sep = ",",
+  header = TRUE,
+  row.names = 1
+)[-1, ]
+
+md.5k <- read.table(
+  file = "atac_pbmc_5k_nextgem_singlecell.csv",
+  stringsAsFactors = FALSE,
+  sep = ",",
+  header = TRUE,
+  row.names = 1
+)[-1, ]
+
+md.10k <- read.table(
+  file = "atac_pbmc_10k_nextgem_singlecell.csv",
+  stringsAsFactors = FALSE,
+  sep = ",",
+  header = TRUE,
+  row.names = 1
+)[-1, ]
+
+#过滤基因表达量过少的细胞
+md.500 <- md.500[md.500$passed_filters > 500, ]
+md.1k <- md.1k[md.1k$passed_filters > 500, ]
+md.5k <- md.5k[md.5k$passed_filters > 500, ]
+md.10k <- md.10k[md.10k$passed_filters > 1000, ] #测序深度更大因此过滤阈值更高
+
+#创建fragment文件
+frags.500 <- CreateFragmentObject(
+  path = "atac_pbmc_500_nextgem_fragments.tsv.gz",
+  cells = rownames(md.500)
+)
+frags.1k <- CreateFragmentObject(
+  path = "atac_pbmc_1k_nextgem_fragments.tsv.gz",
+  cells = rownames(md.1k)
+)
+frags.5k <- CreateFragmentObject(
+  path = "atac_pbmc_5k_nextgem_fragments.tsv.gz",
+  cells = rownames(md.5k)
+)
+frags.10k <- CreateFragmentObject(
+  path = "atac_pbmc_10k_nextgem_fragments.tsv.gz",
+  cells = rownames(md.10k)
+)
+
+```
+
+**将peak值量化**
+```
+pbmc500.counts <- FeatureMatrix(
+  fragments = frags.500,
+  features = combined.peaks,
+  cells = rownames(md.500)
+)
+
+pbmc1k.counts <- FeatureMatrix(
+  fragments = frags.1k,
+  features = combined.peaks,
+  cells = rownames(md.1k)
+)
+
+pbmc5k.counts <- FeatureMatrix(
+  fragments = frags.5k,
+  features = combined.peaks,
+  cells = rownames(md.5k)
+)
+
+pbmc10k.counts <- FeatureMatrix(
+  fragments = frags.10k,
+  features = combined.peaks,
+  cells = rownames(md.10k)
+)
+
+#创建用于分析的seurat object
+pbmc500_assay <- CreateChromatinAssay(pbmc500.counts, fragments = frags.500)
+pbmc500 <- CreateSeuratObject(pbmc500_assay, assay = "ATAC", meta.data=md.500)
+
+pbmc1k_assay <- CreateChromatinAssay(pbmc1k.counts, fragments = frags.1k)
+pbmc1k <- CreateSeuratObject(pbmc1k_assay, assay = "ATAC", meta.data=md.1k)
+
+pbmc5k_assay <- CreateChromatinAssay(pbmc5k.counts, fragments = frags.5k)
+pbmc5k <- CreateSeuratObject(pbmc5k_assay, assay = "ATAC", meta.data=md.5k)
+
+pbmc10k_assay <- CreateChromatinAssay(pbmc10k.counts, fragments = frags.10k)
+pbmc10k <- CreateSeuratObject(pbmc10k_assay, assay = "ATAC", meta.data=md.10k)
+```
+
+## 3.合并对象
+```
+pbmc500$dataset <- 'pbmc500'
+pbmc1k$dataset <- 'pbmc1k'
+pbmc5k$dataset <- 'pbmc5k'
+pbmc10k$dataset <- 'pbmc10k'
+
+combined <- merge(
+  x = pbmc500,
+  y = list(pbmc1k, pbmc5k, pbmc10k),
+  add.cell.ids = c("500", "1k", "5k", "10k")
+)
+combined[["ATAC"]]
+```
+## 4.后续降维
+```
+combined <- RunTFIDF(combined)
+combined <- FindTopFeatures(combined, min.cutoff = 20)
+combined <- RunSVD(combined)
+combined <- RunUMAP(combined, dims = 2:50, reduction = 'lsi')
+DimPlot(combined, group.by = 'dataset', pt.size = 0.1)
+```
