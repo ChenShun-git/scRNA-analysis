@@ -354,10 +354,10 @@ DimPlot(combined, group.by = 'dataset', pt.size = 0.1)
 
 对比没有经过common peak set直接合并的聚类结果
 ```
-counts.500 <- Read10X_h5("../vignette_data/pbmc500/atac_pbmc_500_nextgem_filtered_peak_bc_matrix.h5")
-counts.1k <- Read10X_h5("../vignette_data/pbmc1k/atac_pbmc_1k_nextgem_filtered_peak_bc_matrix.h5")
-counts.5k <- Read10X_h5("../vignette_data/pbmc5k/atac_pbmc_5k_nextgem_filtered_peak_bc_matrix.h5")
-counts.10k <- Read10X_h5("../vignette_data/pbmc10k/atac_pbmc_10k_nextgem_filtered_peak_bc_matrix.h5")
+counts.500 <- Read10X_h5("atac_pbmc_500_nextgem_filtered_peak_bc_matrix.h5")
+counts.1k <- Read10X_h5("atac_pbmc_1k_nextgem_filtered_peak_bc_matrix.h5")
+counts.5k <- Read10X_h5("atac_pbmc_5k_nextgem_filtered_peak_bc_matrix.h5")
+counts.10k <- Read10X_h5("atac_pbmc_10k_nextgem_filtered_peak_bc_matrix.h5")
 
 pbmc500_assay <- CreateChromatinAssay(counts = counts.500, sep = c(":", "-"), min.features = 500)
 pbmc500 <- CreateSeuratObject(pbmc500_assay, assay = "peaks")
