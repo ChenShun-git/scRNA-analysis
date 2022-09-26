@@ -195,6 +195,7 @@ result <- enrich.kegg.res@result
 write.table(result,"enrich.kegg.res.txt",sep = "\t",col.names = NA)
 ```
 ![enrich.kegg.res](https://upload-images.jianshu.io/upload_images/28382212-d39b0672293c1c96.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 **挑选其中感兴趣的通路进行作图**
 以第12-16，21-23，27-29个通路为例，将这些通路制成一个txt文件
 ，并读取该文件进行作图
@@ -295,6 +296,7 @@ erich.go.BP = enrichGO(gene =degs.list,
 dotplot(erich.go.BP,showCategory = 30)
 ```
 ![富集结果dotplot](https://upload-images.jianshu.io/upload_images/28382212-f8bbb71d76038539.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 **挑选感兴趣的通路进行作图**
 ```
 erich.go.BP=erich.go.BP@result
@@ -312,6 +314,7 @@ rownames(go1)=go1$ID
 go=go1
 ```
 ![go](https://upload-images.jianshu.io/upload_images/28382212-49994e7432189f80.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ```
 #调整go数据框
 library(stringr)
@@ -320,6 +323,7 @@ names(go)=c('ID','Term','Genes','adj_pval')
 go$Category="BP"
 ```
 ![go](https://upload-images.jianshu.io/upload_images/28382212-b9ff47e739248237.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ```
 #提取每个通路对应的基因
 x1=strsplit(go$Genes[1],split=",",fixed=T)
@@ -333,6 +337,7 @@ genedata2=data.frame(ID=genedata1$ID,logFC=genedata1$avg_log2FC)
 ```
 ![genedata1](https://upload-images.jianshu.io/upload_images/28382212-0f1871dffce7cd0b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![genedata2](https://upload-images.jianshu.io/upload_images/28382212-7fe36017d74c099a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 **各种形式可视化**
 ```
 circ <- circle_dat(go,genedata2)
@@ -359,9 +364,11 @@ GOHeat(chord, nlfc = 1, fill.col = c('red', 'yellow', 'green'))
 ![chord plot
 ](https://upload-images.jianshu.io/upload_images/28382212-e48d32a2a613e64d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![heatmap](https://upload-images.jianshu.io/upload_images/28382212-2f46bbc7bfd106cd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 # 3.GSVA富集
 GSVA富集不仅可以得出差异基因富集于哪个通路，还能分析出该通路相关的基因综合表达是上调还是下调。GSVA先将基因富集到各通路上，再通过差异分析找出差异表达的通路。
 ![GSVA原理](https://upload-images.jianshu.io/upload_images/28382212-15ef8d11bc7cc446.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ### ①pipeline
 输入表达矩阵，得到GSVA评分矩阵
 **准备分析数据与package**
@@ -405,6 +412,7 @@ colnames(design) = levels(factor(group))
 rownames(design) = colnames(GSVA_hall)
 ```
 ![design](https://upload-images.jianshu.io/upload_images/28382212-cf72b977a572bea4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ```
 ###进行差异分析###
 #创建比较对象，此处是s.3与s.11比较
@@ -418,6 +426,7 @@ fit3 <- eBayes(fit2)
 Diff <- topTable(fit3, coef=1, number=200)
 ```
 ![Diff](https://upload-images.jianshu.io/upload_images/28382212-e9405de49a46742e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 **可视化**
 ```
 dat_plot <- data.frame(id = row.names(Diff),
@@ -433,6 +442,7 @@ dat_plot$threshold = factor(ifelse(dat_plot$t  >-1, ifelse(dat_plot$t >= 1 ,'Up'
 dat_plot <- dat_plot %>% arrange(t)
 ```
 ![dat_plot](https://upload-images.jianshu.io/upload_images/28382212-56fea16f8c3eb8d8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ```
 library(ggplot2)
 library(ggthemes)
@@ -472,6 +482,7 @@ p <- p + geom_text(data = dat_plot[1:low1,],aes(x = id,y = 0.1,label = id),
 p
 ```
 ![p](https://upload-images.jianshu.io/upload_images/28382212-aef6b8b27f1f581c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ```
 pheatmap::pheatmap(GSVA_hall, #热图的数据
                    cluster_rows = T,#行聚类
@@ -483,6 +494,7 @@ pheatmap::pheatmap(GSVA_hall, #热图的数据
 
 ```
 ![heatmap](https://upload-images.jianshu.io/upload_images/28382212-f664b262d9f79746.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 # 4.自定义通路
 某些情况下直接用GO、KEGG、hallmark等数据库已有的基因集进行富集分析得不到理想结果，就可以自定义通路与通路对应的基因进行GSVA分析（通过文献或已有资料删除对通路起负反馈效果的基因等）。
 ### ①GSVA自定义分析
@@ -657,6 +669,7 @@ egmt=GSEA(genelist,TERM2GENE = geneset,
 gseaplot2(egmt,geneSetID =c(1,2),pvalue_table = T,base_size = 5)
 ```
 ![富集结果](https://upload-images.jianshu.io/upload_images/28382212-26aacc659ebf6871.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 第一部分为基因Enrichment Score的折线图，大概意思是对差异基因排序列表进行扫描，每遇到一个参与该通路的差异基因，得分就会上升，如果遇到一个差异基因不在该通路里，就罚分；score纵轴为对应的Running ES, 在折线图中有个峰值，该峰值就是这个基因集的Enrichemnt score，峰值之前的基因就是该基因集下的核心基因，也称为领头亚集基因，表明对该条通路最终得分贡献最大的基因。
 第二部分用线条标记位于该基因集下的基因，从左到右按照log2FC从高到低进行排序。
 第三部分的纵坐标代表FoldChange值。
@@ -711,6 +724,7 @@ ggplot(fgseaRes %>% filter(padj < 0.005) %>% head(n= 20), aes(reorder(pathway, N
 ```
 ![fgseaRes](https://upload-images.jianshu.io/upload_images/28382212-f254d1a665ab0489.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ![](https://upload-images.jianshu.io/upload_images/28382212-80c4974a1a633b4d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ### ③自定义画图
 **加载数据，寻找差异基因**
 ```
@@ -771,6 +785,7 @@ gseaplot2(kk, geneSetID = c(1,2),
 
 ```
 ![](https://upload-images.jianshu.io/upload_images/28382212-0f2e424a9ec396cc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 **自定义作图**
 作图前数据准备
 ```
@@ -821,6 +836,7 @@ p.res <- ggplot(gsdata, aes_(x = ~x)) + xlab(NULL) +
         plot.margin=margin(t=.2, r = .2, b=0, l=.2, unit="cm"))
 ```
 ![running score](https://upload-images.jianshu.io/upload_images/28382212-f66859b436d480e3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ```
 # 画rank
 if (rankmode == "comb") {
@@ -875,6 +891,7 @@ if (rankmode == "comb") {
 ```
 
 ![rank](https://upload-images.jianshu.io/upload_images/28382212-7da8cc099de4aab8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
 ```
 # 画变化倍数
 df2 <- p.res$data
