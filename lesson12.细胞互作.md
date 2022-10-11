@@ -299,7 +299,57 @@ cellchat=mergeCellChat(cc.list,cell.prefix = T,add.names = names(cc.list))
 
 ```
 #可视化
+##所有细胞群总体观：通讯数量与强度对比
+compareInteractions(cellchat,show.legend = F,group = c(1,3),measure = "count")
+compareInteractions(cellchat,show.legend = F,group = c(1,3),measure = "weight")
+##第一个图展示通讯数量之间的差异，第二个图展示通讯强度之间的差异。 
 ```
+![image](https://user-images.githubusercontent.com/112565216/195054095-8a258e70-d420-457d-8f35-a591925a7710.png)
+![image](https://user-images.githubusercontent.com/112565216/195054139-10aa5b52-3746-4002-94e3-b31393684a22.png)
+
+```
+##数量与强度差异网络图
+netVisual_diffInteraction(cellchat,weight.scale = T)
+netVisual_diffInteraction(cellchat,weight.scale = T,measure = "weight")
+##红色是case相对于control上调的，蓝色是下调的
+
+```
+![image](https://user-images.githubusercontent.com/112565216/195054298-a716dbde-9b74-42ac-8a08-84edde954f32.png)
+![image](https://user-images.githubusercontent.com/112565216/195054380-0038e133-51dc-4079-af4b-55b63769b9f3.png)
+
+```
+#数量与强度差异热图
+netVisual_heatmap(cellchat)
+netVisual_heatmap(cellchat,measure = "weight")
+#case和control对比，红色是上调，蓝色是下调
+```
+![image](https://user-images.githubusercontent.com/112565216/195055039-ee32cdf5-86c2-464a-b572-8ca317f656cf.png)
+![image](https://user-images.githubusercontent.com/112565216/195055079-189b586f-3242-4124-9afe-30c139115980.png)
+
+```
+#保守和特异性信号通路的识别与可视化
+rankNet(cellchat,mode = "comparison",stacked = T,do.stat = T)
+rankNet(cellchat,mode = "comparison",stacked =F,do.stat = T)
+```
+![image](https://user-images.githubusercontent.com/112565216/195056278-80b1a149-478e-4aae-83ec-f27262b4b9a9.png)
+![image](https://user-images.githubusercontent.com/112565216/195056324-1a7ea2b7-12ae-4136-b4e8-819485ab4ef6.png)
+
+```
+##细胞互作数量对比网络图
+weight.max=getMaxWeight(cc.list,attribute = c("idents","count"))
+netVisual_circle(cc.list[[1]]@net$count,weight.scale = T,label.edge = F,
+                 edge.weight.max =weight.max[2],edge.width.max = 12,title.name = "sc11" )
+
+netVisual_circle(cc.list[[2]]@net$count,weight.scale = T,label.edge = F,
+                 edge.weight.max =weight.max[2],edge.width.max = 12,title.name = "sc3" )
+```
+![image](https://user-images.githubusercontent.com/112565216/195057354-e788ef86-99cc-4fcb-9e59-060dac483820.png)
+![image](https://user-images.githubusercontent.com/112565216/195057430-c50cfa3d-cba6-4efc-af2c-8648893d08eb.png)
+
+```
+netVisual_bubble(cellchat,sources.use = 4,targets.use = 5:11,comparison = c(1:2),angle.x = 45)
+```
+![image](https://user-images.githubusercontent.com/112565216/195059582-2bc296db-01f0-45ed-bedd-4d70fe116d4a.png)
 
 
 
