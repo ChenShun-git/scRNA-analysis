@@ -347,6 +347,7 @@ netVisual_circle(cc.list[[2]]@net$count,weight.scale = T,label.edge = F,
 ![image](https://user-images.githubusercontent.com/112565216/195057430-c50cfa3d-cba6-4efc-af2c-8648893d08eb.png)
 
 ```
+#选定receptor，target与通路，并比较特定细胞种类与通路情况下不同样本中的全部L-R配对情况
 netVisual_bubble(cellchat,sources.use = 4,targets.use = 5:11,comparison = c(1:2),angle.x = 45)
 ```
 ![image](https://user-images.githubusercontent.com/112565216/195059582-2bc296db-01f0-45ed-bedd-4d70fe116d4a.png)
