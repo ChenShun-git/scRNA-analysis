@@ -494,3 +494,90 @@ plotCytoTRACE(results, phenotype = marrow_10x_pheno,
 ```
 ![image](https://user-images.githubusercontent.com/112565216/195977809-e8d279c7-5f82-4ac0-b3aa-0757f54dc351.png)
 
+# PCA展示轨迹
+```
+library(Seurat)
+library(magrittr)
+library(ggplot2)
+library(data.table)
+
+umi <- read.table(file = gzfile("GSE130664_merge_UMI_count.txt.gz"), header = T, row.names = 1, sep = "\t")
+meta <-  fread("GSE130664_barcode_information.txt.gz",data.table = F)
+#创建seurat object
+rownames(meta)=meta$processed_cell
+sc <- CreateSeuratObject(counts = umi , meta.data = meta)
+#归一化
+sc@assays$RNA@data <- sc@assays$RNA@counts %>% 
+  apply(2, function(x){
+    log2(10^5*x/sum(x)+1)
+  })
+  #提取卵母细胞barcode
+meta_oo <- readxl::read_excel(path = "mmc2.xlsx", sheet = 2) 
+sc_oo <- sc[,meta_oo$cell] 
+
+#批次效应处理
+sc_oo_mnn <- batchelor::mnnCorrect(# mmnCorrect is no longer in scran 
+  as.SingleCellExperiment(sc_oo),
+  batch = sc_oo$raw_data,
+  k = 4, 
+  sigma = 0.1, cos.norm.in = T, cos.norm.out = T, 
+  var.adj = T
+)
+prData <- SummarizedExperiment::assay(sc_oo_mnn)
+```
+![image](https://user-images.githubusercontent.com/112565216/195979455-b0ae5e31-99ca-42b7-bd0c-e9a6d81348ec.png)
+
+```
+#提取高边基因并对高变基因进行PCA降维
+sc_oo %<>% FindVariableFeatures(selection.method = "mvp", mean.cutoff = c(1,8))
+prres <- prcomp(prData[VariableFeatures(sc_oo), ] %>% t, scale. = F)
+
+#对全基因进行降维聚类
+sc_oo %<>% ScaleData 
+sc_oo@assays$RNA@scale.data <- prData[rownames(sc_oo@assays$RNA@scale.data), colnames(sc_oo@assays$RNA@scale.data)]
+sc_oo %<>% RunPCA
+sc_oo %<>% FindNeighbors(dims = 1:15) %>% FindClusters(resolution = 0.6)
+
+#提取PCA降维数据
+pca.pv <- sc_oo@reductions$pca
+#计算坐标轴标签
+pc1.pv <- paste0(round(pca.pv@stdev[1], digits = 3) * 100, "%")
+pc2.pv <- paste0(round(pca.pv@stdev[2], digits = 3) * 100, "%")
+
+# 修改seurat_clusters的名字
+sc_oo@meta.data$seurat_clusters <- factor(sc_oo@meta.data$seurat_clusters, 
+                                          levels = c("0", "1", "2", "3"), 
+                                          labels = c("C1", "C2", "C3", "C4"))
+
+# 画图
+PCAPlot(sc_oo, group.by = "seurat_clusters") +
+  scale_color_manual(values = c("darkmagenta", "steelblue", "chartreuse3", "red")) +
+  xlab(paste0("PC1 (", pc1.pv,")")) + 
+  ylab(paste0("PC2 (", pc2.pv,")")) 
+
+```
+![image](https://user-images.githubusercontent.com/112565216/195980363-76b3effa-e6c9-4af7-b991-bd063e635d4f.png)
+```
+#针对marker基因作PCA图
+markers <- c("ZP1", "WEE2", "DNMT1", "ATP6", "FIGLA", "SOX17")
+reshape2::melt(cbind(sc_oo@meta.data[,"seurat_clusters", drop = F],
+                     PC1 = -prres$x[,1],
+                     GetAssayData(sc_oo)[markers,] %>% t
+                     
+), 
+id.vars = c("seurat_clusters", "PC1")) %>%
+  ggplot(mapping = aes(PC1, value)) +
+  ylab("Relative expression") +
+  geom_point(mapping = aes(color = seurat_clusters)) +
+  geom_smooth() +
+  scale_color_manual(values = c("darkmagenta", "steelblue", "chartreuse3", "red")) +
+  facet_wrap(~variable, scales = "free_y") +
+  theme_classic() +
+  theme(panel.border = element_rect(fill = NA),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+```
+![image](https://user-images.githubusercontent.com/112565216/195980467-8b7019b9-31f5-4d4d-8256-c830a5496454.png)
+
+
