@@ -471,3 +471,26 @@ scprep.plot.scatter_2d(Y_phate,c=chronic_magic["A2M"],cmap="Reds",
                       ticks=False,label_prefix="PHATE",title="A2M"+"magic expression")
 ```
 ![image](https://user-images.githubusercontent.com/112565216/191193158-36c8b090-4151-4719-81d5-34c7fda1cca5.png)
+
+
+# Cytotrace
+```
+library(reticulate)
+conda_create("cytoTRACE",python_version = '3.7')
+use_condaenv("cytoTRACE")
+conda_install("cytoTRACE", "numpy") 
+conda_install("cytoTRACE", "scanoconcoramaCT") 
+library(CytoTRACE)
+```
+利用自带的数据库进行分析
+```
+results <- CytoTRACE(marrow_10x_expr) 
+#可视化
+plotCytoTRACE(results, phenotype = marrow_10x_pheno)
+#将某个基因表达情况可视化
+plotCytoTRACE(results, phenotype = marrow_10x_pheno,
+              gene = "Gapdh" )
+
+```
+![image](https://user-images.githubusercontent.com/112565216/195977809-e8d279c7-5f82-4ac0-b3aa-0757f54dc351.png)
+
